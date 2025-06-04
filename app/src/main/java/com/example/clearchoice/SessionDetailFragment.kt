@@ -34,7 +34,6 @@ class SessionDetailFragment : Fragment() {
     private lateinit var textViewRedactionStatus: TextView
     private lateinit var buttonDiarize: Button
     private lateinit var textViewDiarizationStatus: TextView
-    // New UI for Export
     private lateinit var buttonExport: Button
 
 
@@ -44,7 +43,7 @@ class SessionDetailFragment : Fragment() {
     private lateinit var sessionManager: SessionManager
     private lateinit var whisperService: WhisperService
     private lateinit var diarizationService: DiarizationService
-    private lateinit var exportService: ExportService // Added
+    private lateinit var exportService: ExportService
     private var currentSessionFolderFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,7 +54,7 @@ class SessionDetailFragment : Fragment() {
         sessionManager = SessionManager()
         whisperService = WhisperService()
         diarizationService = DiarizationService()
-        exportService = ExportService() // Initialize ExportService
+        exportService = ExportService()
     }
 
     override fun onCreateView(
@@ -63,7 +62,6 @@ class SessionDetailFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_session_detail, container, false)
-        // Initialize all views...
         textViewSessionNameDetail = view.findViewById(R.id.textViewSessionNameDetail)
         buttonPlayAudio = view.findViewById(R.id.buttonPlayAudio)
         buttonTranscribe = view.findViewById(R.id.buttonTranscribe)
@@ -74,11 +72,11 @@ class SessionDetailFragment : Fragment() {
         textViewRedactionStatus = view.findViewById(R.id.textViewRedactionStatus)
         buttonDiarize = view.findViewById(R.id.buttonDiarize)
         textViewDiarizationStatus = view.findViewById(R.id.textViewDiarizationStatus)
-        buttonExport = view.findViewById(R.id.buttonExport) // Initialize export button
+        buttonExport = view.findViewById(R.id.buttonExport)
 
         sessionFolderName?.let { name ->
-            textViewSessionNameDetail.text = "Session: $name"
-            textViewTranscriptionStatus.text = "Status: Ready"
+            textViewSessionNameDetail.text = getString(R.string.session_detail_title_prefix) + name
+            textViewTranscriptionStatus.text = getString(R.string.session_detail_transcription_status_ready)
             textViewRedactionStatus.text = "Status: "
             textViewDiarizationStatus.text = "Status: "
 
@@ -87,17 +85,23 @@ class SessionDetailFragment : Fragment() {
                 val sessionsRoot = File(baseDir, "ClearChoiceSessions")
                 currentSessionFolderFile = File(sessionsRoot, name)
                 if (currentSessionFolderFile?.exists() == false) {
-                    // Disable all buttons if session folder is invalid
+                    Log.e(TAG, "Session folder does not exist: ${currentSessionFolderFile?.absolutePath}")
+                    Toast.makeText(context, getString(R.string.session_detail_error_not_found), Toast.LENGTH_LONG).show()
                     listOf(buttonPlayAudio, buttonTranscribe, buttonRedact, buttonDiarize, buttonExport).forEach { it.isEnabled = false }
                 } else {
                     loadAndDisplayExistingTranscript()
                 }
             } else {
+                Log.e(TAG, "External storage not available to access session folder.")
+                Toast.makeText(context, getString(R.string.session_detail_error_storage_not_available), Toast.LENGTH_LONG).show()
                 listOf(buttonPlayAudio, buttonTranscribe, buttonRedact, buttonDiarize, buttonExport).forEach { it.isEnabled = false }
             }
         } ?: run {
+            textViewSessionNameDetail.text = getString(R.string.session_detail_error_no_name)
             listOf(buttonPlayAudio, buttonTranscribe, buttonRedact, buttonDiarize, buttonExport).forEach { it.isEnabled = false }
-            // Update status texts for error
+            textViewTranscriptionStatus.text = getString(R.string.session_detail_transcription_status_ready) // Default
+            textViewRedactionStatus.text = ""
+            textViewDiarizationStatus.text = ""
         }
 
         buttonPlayAudio.setOnClickListener { if (isPlaying) { stopPlayback() } else { startPlayback() } }
@@ -131,59 +135,68 @@ class SessionDetailFragment : Fragment() {
         updateRedactButtonState(metadata)
         updateDiarizeButtonState(metadata)
         updateExportButtonState(metadata)
+        // Update transcribe button text based on transcript existence
+        val safeMetadata = metadata ?: readMetadataForCurrentSession()
+        if (safeMetadata?.has_transcript == true) {
+            buttonTranscribe.text = getString(R.string.session_detail_retranscribe_button)
+        } else {
+            buttonTranscribe.text = getString(R.string.session_detail_transcribe_button)
+        }
     }
 
     private fun updateExportButtonState(metadata: Metadata?) {
         val safeMetadata = metadata ?: readMetadataForCurrentSession()
         buttonExport.isEnabled = safeMetadata?.has_transcript == true
+        if(buttonExport.isEnabled) {
+            buttonExport.text = getString(R.string.session_detail_export_button)
+        }
     }
 
-
-    private fun updateRedactButtonState(metadata: Metadata?) { /* ... unchanged ... */
+    private fun updateRedactButtonState(metadata: Metadata?) {
         val safeMetadata = metadata ?: readMetadataForCurrentSession()
         if (safeMetadata == null) {
             buttonRedact.isEnabled = false
-            textViewRedactionStatus.text = "Status: (metadata missing)"
+            textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_missing_metadata)
             return
         }
 
         if (safeMetadata.has_transcript && !safeMetadata.has_redacted) {
             buttonRedact.isEnabled = true
-            buttonRedact.text = "Redact Transcript"
-            textViewRedactionStatus.text = "Status: Ready to Redact"
+            buttonRedact.text = getString(R.string.session_detail_redact_button)
+            textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_ready)
         } else if (safeMetadata.has_transcript && safeMetadata.has_redacted) {
             buttonRedact.isEnabled = false
-            buttonRedact.text = "Redacted"
-            textViewRedactionStatus.text = "Status: Redaction already done."
+            buttonRedact.text = getString(R.string.session_detail_redacted_button)
+            textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_done)
         } else {
             buttonRedact.isEnabled = false
-            textViewRedactionStatus.text = "Status: (needs transcript first)"
+            textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_needs_transcript)
         }
     }
 
-    private fun updateDiarizeButtonState(metadata: Metadata?) { /* ... unchanged ... */
+    private fun updateDiarizeButtonState(metadata: Metadata?) {
         val safeMetadata = metadata ?: readMetadataForCurrentSession()
         val audioFileExists = currentSessionFolderFile?.let { sessionManager.getAudioFilePath(it).exists() } ?: false
 
         if (safeMetadata == null && audioFileExists) {
              buttonDiarize.isEnabled = true
-             buttonDiarize.text = "Diarize Speakers"
-             textViewDiarizationStatus.text = "Status: Ready to Diarize"
+             buttonDiarize.text = getString(R.string.session_detail_diarize_button)
+             textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_ready)
         } else if (safeMetadata != null && audioFileExists && !safeMetadata.has_diarization) {
             buttonDiarize.isEnabled = true
-            buttonDiarize.text = "Diarize Speakers"
-            textViewDiarizationStatus.text = "Status: Ready to Diarize"
+            buttonDiarize.text = getString(R.string.session_detail_diarize_button)
+            textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_ready)
         } else if (safeMetadata != null && safeMetadata.has_diarization) {
             buttonDiarize.isEnabled = false
-            buttonDiarize.text = "Diarized"
-            textViewDiarizationStatus.text = "Status: Diarization already done."
+            buttonDiarize.text = getString(R.string.session_detail_diarized_button)
+            textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_done)
         } else {
             buttonDiarize.isEnabled = false
-            textViewDiarizationStatus.text = "Status: (audio file needed)"
+            textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_audio_needed)
         }
     }
 
-    private fun loadAndDisplayExistingTranscript() { /* ... calls updateAllButtonStates ... */
+    private fun loadAndDisplayExistingTranscript() {
         currentSessionFolderFile?.let { folder ->
             val transcriptFile = File(folder, TRANSCRIPT_FILE_NAME)
             val metadata = readMetadataForCurrentSession()
@@ -194,17 +207,18 @@ class SessionDetailFragment : Fragment() {
                     if (transcriptText.isNotBlank()) {
                         textViewTranscript.text = transcriptText
                         scrollViewTranscript.visibility = View.VISIBLE
-                        textViewTranscriptionStatus.text = "Status: Transcript loaded."
-                        buttonTranscribe.text = "Re-Transcribe"
+                        textViewTranscriptionStatus.text = getString(R.string.session_detail_transcript_loaded)
                     } else {
-                         textViewTranscriptionStatus.text = "Status: Ready (empty transcript file)."
+                         textViewTranscriptionStatus.text = getString(R.string.session_detail_transcription_status_empty_file)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error reading transcript file", e)
-                    textViewTranscriptionStatus.text = "Status: Error reading transcript."
+                    textViewTranscriptionStatus.text = getString(R.string.session_detail_transcription_status_error_reading)
                 }
             } else {
-                 textViewTranscriptionStatus.text = "Status: No transcript yet."
+                 textViewTranscriptionStatus.text = getString(R.string.session_detail_transcription_status_no_transcript)
+                 scrollViewTranscript.visibility = View.GONE
+                 textViewTranscript.text = ""
             }
             updateAllButtonStates(metadata)
         }
@@ -215,19 +229,26 @@ class SessionDetailFragment : Fragment() {
         val radioGroupSource: RadioGroup = dialogView.findViewById(R.id.radioGroupSource)
         val radioOriginal: RadioButton = dialogView.findViewById(R.id.radioOriginal)
         val radioRedacted: RadioButton = dialogView.findViewById(R.id.radioRedacted)
-        val radioGroupFormat: RadioGroup = dialogView.findViewById(R.id.radioGroupFormat)
+        // Set texts from strings.xml for dialog
+        radioOriginal.text = getString(R.string.session_detail_export_source_original)
+        radioRedacted.text = getString(R.string.session_detail_export_source_redacted)
+        dialogView.findViewById<TextView>(R.id.textViewDialogExportSourceLabel).text = getString(R.string.session_detail_export_source_label)
+        dialogView.findViewById<TextView>(R.id.textViewDialogExportFormatLabel).text = getString(R.string.session_detail_export_format_label)
+        dialogView.findViewById<RadioButton>(R.id.radioFormatTxt).text = getString(R.string.session_detail_export_format_txt)
+        dialogView.findViewById<RadioButton>(R.id.radioFormatJson).text = getString(R.string.session_detail_export_format_json)
+        dialogView.findViewById<RadioButton>(R.id.radioFormatPdf).text = getString(R.string.session_detail_export_format_pdf)
+
 
         val metadata = readMetadataForCurrentSession()
         radioRedacted.isEnabled = metadata?.has_redacted == true
         if (!radioRedacted.isEnabled) { radioOriginal.isChecked = true }
 
-
         AlertDialog.Builder(requireContext())
-            .setTitle("Export Options")
+            .setTitle(getString(R.string.session_detail_export_options_title))
             .setView(dialogView)
-            .setPositiveButton("Export") { dialog, _ ->
+            .setPositiveButton(getString(R.string.session_detail_export_action)) { dialog, _ ->
                 val selectedSourceId = radioGroupSource.checkedRadioButtonId
-                val selectedFormatId = radioGroupFormat.checkedRadioButtonId
+                val selectedFormatId = dialogView.findViewById<RadioGroup>(R.id.radioGroupFormat).checkedRadioButtonId
 
                 val isOriginal = selectedSourceId == R.id.radioOriginal
                 val transcriptType = if (isOriginal) "original" else "redacted"
@@ -235,31 +256,26 @@ class SessionDetailFragment : Fragment() {
                 val format = when (selectedFormatId) {
                     R.id.radioFormatJson -> "json"
                     R.id.radioFormatPdf -> "pdf"
-                    else -> "txt" // Default to txt
+                    else -> "txt"
                 }
 
-                val contentFile = if (isOriginal) {
-                    File(currentSessionFolderFile!!, TRANSCRIPT_FILE_NAME)
-                } else {
-                    File(currentSessionFolderFile!!, REDACTED_TRANSCRIPT_FILE_NAME)
-                }
+                val contentFile = if (isOriginal) { File(currentSessionFolderFile!!, TRANSCRIPT_FILE_NAME) }
+                                  else { File(currentSessionFolderFile!!, REDACTED_TRANSCRIPT_FILE_NAME) }
 
                 if (!contentFile.exists()) {
-                    Toast.makeText(context, "Selected transcript file not found.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, getString(R.string.session_detail_export_error_source_not_found), Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
                 val transcriptContent = contentFile.readText()
                 if (transcriptContent.isBlank()){
-                     Toast.makeText(context, "Selected transcript content is blank.", Toast.LENGTH_SHORT).show()
+                     Toast.makeText(context, getString(R.string.session_detail_export_error_source_blank), Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
-
                 prepareAndShareFile(transcriptType, transcriptContent, format)
                 dialog.dismiss()
             }
-            .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
-            .create()
-            .show()
+            .setNegativeButton(getString(R.string.session_detail_export_cancel)) { dialog, _ -> dialog.cancel() }
+            .create().show()
     }
 
     private fun prepareAndShareFile(transcriptType: String, transcriptContent: String, format: String) {
@@ -273,128 +289,123 @@ class SessionDetailFragment : Fragment() {
             withContext(Dispatchers.IO) {
                 try {
                     when (format) {
-                        "txt" -> {
-                            tempFile.writeText(transcriptContent)
-                            success = true
-                        }
+                        "txt" -> { tempFile.writeText(transcriptContent); success = true }
                         "json" -> {
                             val speakersFile = File(currentSessionFolderFile!!, SPEAKERS_FILE_NAME)
                             val speakersJsonContent = if (speakersFile.exists()) speakersFile.readText() else null
-                            val jsonExportData = exportService.prepareJsonExport(
-                                sessionName, transcriptType, transcriptContent, speakersJsonContent
-                            )
-                            tempFile.writeText(jsonExportData)
-                            mimeType = "application/json"
-                            success = true
+                            val jsonExportData = exportService.prepareJsonExport(sessionName, transcriptType, transcriptContent, speakersJsonContent)
+                            tempFile.writeText(jsonExportData); mimeType = "application/json"; success = true
                         }
                         "pdf" -> {
                             success = exportService.preparePdfExport(requireContext(), transcriptContent, tempFile)
                             mimeType = "application/pdf"
                         }
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error preparing export file $exportFileName", e)
-                }
+                } catch (e: Exception) { Log.e(TAG, "Error preparing export file $exportFileName", e) }
             }
 
-            if (success) {
-                exportService.shareFile(requireContext(), tempFile, mimeType)
-            } else {
-                Toast.makeText(context, "Failed to prepare export file.", Toast.LENGTH_SHORT).show()
-            }
+            if (success) { exportService.shareFile(requireContext(), tempFile, mimeType) }
+            else { Toast.makeText(context, getString(R.string.session_detail_export_error_prepare_failed), Toast.LENGTH_SHORT).show() }
         }
     }
 
-    // Methods for handleDiarization, handleRedaction, handleTranscription, saveTranscriptToFile, updateMetadata, MediaPlayer are largely the same
-    // ... (ensure they call updateAllButtonStates where appropriate, especially in finally blocks or after metadata changes) ...
-    private fun handleDiarization() { /* ... calls updateMetadata ... */
+    private fun handleDiarization() {
         if (currentSessionFolderFile == null || !currentSessionFolderFile!!.exists()) { /* ... */ return }
         val audioFile = sessionManager.getAudioFilePath(currentSessionFolderFile!!)
-        if (!audioFile.exists()) { /* ... */ return }
+        if (!audioFile.exists()) {
+            Toast.makeText(context, getString(R.string.session_detail_diarization_audio_missing), Toast.LENGTH_SHORT).show()
+            textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_audio_needed)
+            return
+        }
 
-        buttonDiarize.isEnabled = false; buttonDiarize.text = "Diarizing..."
-        textViewDiarizationStatus.text = "Status: Diarizing..."
-        // Disable other ops
+        buttonDiarize.isEnabled = false; buttonDiarize.text = getString(R.string.session_detail_diarizing_button)
+        textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_in_progress)
         buttonTranscribe.isEnabled = false; buttonRedact.isEnabled = false; buttonExport.isEnabled = false;
 
         viewLifecycleOwner.lifecycleScope.launch {
             var diarizationJson: String? = null
             try {
                 withContext(Dispatchers.IO) {
-                    diarizationService.runDiarization(requireContext(), currentSessionFolderFile!!, audioFile) { result ->
-                        diarizationJson = result
-                    }
+                    diarizationService.runDiarization(requireContext(), currentSessionFolderFile!!, audioFile) { result -> diarizationJson = result }
                 }
                 if (diarizationJson != null && diarizationJson!!.isNotBlank() && !diarizationJson!!.startsWith("Error:")) {
                     val speakersFile = File(currentSessionFolderFile!!, SPEAKERS_FILE_NAME)
                     try {
                         withContext(Dispatchers.IO) { FileWriter(speakersFile).use { it.write(diarizationJson) } }
-                        textViewDiarizationStatus.text = "Status: Diarization Complete."
+                        textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_complete)
                         updateMetadata(hasDiarization = true)
                     } catch (e: IOException) {
-                        textViewDiarizationStatus.text = "Status: Error saving results."
+                        textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_error_saving)
                         updateMetadata(hasDiarization = false)
                     }
                 } else {
-                    textViewDiarizationStatus.text = "Status: Diarization Failed or empty."
+                    textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_failed)
+                    Log.e(TAG, "Diarization failed. Result: $diarizationJson")
                     updateMetadata(hasDiarization = false)
                 }
             } catch (e: Exception) {
-                textViewDiarizationStatus.text = "Status: Diarization Error (Exception)."
+                Log.e(TAG, "Exception during diarization", e)
+                textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_error_exception)
                 updateMetadata(hasDiarization = false)
             } finally {
-                 updateAllButtonStates(readMetadataForCurrentSession()) // Re-enable relevant buttons
-                 buttonTranscribe.isEnabled = readMetadataForCurrentSession()?.has_transcript != true // Example logic
+                 updateAllButtonStates(readMetadataForCurrentSession())
+                 buttonTranscribe.isEnabled = readMetadataForCurrentSession()?.has_transcript != true
             }
         }
     }
-    private fun handleRedaction() { /* ... calls updateMetadata ... */
+    private fun handleRedaction() {
         if (currentSessionFolderFile == null || !currentSessionFolderFile!!.exists()) { /* ... */ return }
         val transcriptFile = File(currentSessionFolderFile!!, TRANSCRIPT_FILE_NAME)
-        if (!transcriptFile.exists() || transcriptFile.length() == 0L) { /* ... */ return }
+        if (!transcriptFile.exists() || transcriptFile.length() == 0L) {
+            Toast.makeText(context, getString(R.string.session_detail_redaction_transcript_missing), Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        buttonRedact.isEnabled = false; buttonRedact.text = "Redacting..."
-        textViewRedactionStatus.text = "Status: Redacting..."
+        buttonRedact.isEnabled = false; buttonRedact.text = getString(R.string.session_detail_redacting_button)
+        textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_in_progress)
         buttonDiarize.isEnabled = false; buttonTranscribe.isEnabled = false; buttonExport.isEnabled = false;
-
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val originalTranscript = withContext(Dispatchers.IO) { transcriptFile.readText() }
-                if (originalTranscript.isBlank()) { /* ... */ updateAllButtonStates(readMetadataForCurrentSession()); return@launch }
+                if (originalTranscript.isBlank()) {
+                    textViewRedactionStatus.text = getString(R.string.session_detail_redaction_transcript_blank)
+                    updateAllButtonStates(readMetadataForCurrentSession()); return@launch
+                }
                 val redactedTranscript = withContext(Dispatchers.Default) { Redactor.redact(originalTranscript) }
                 val redactedFile = File(currentSessionFolderFile!!, REDACTED_TRANSCRIPT_FILE_NAME)
                 withContext(Dispatchers.IO) { FileWriter(redactedFile).use { it.write(redactedTranscript) } }
                 updateMetadata(hasRedacted = true)
-                textViewRedactionStatus.text = "Status: Redaction Complete."
+                textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_complete)
             } catch (e: Exception) {
-                textViewRedactionStatus.text = "Status: Redaction Error."
+                Log.e(TAG, "Error during redaction", e)
+                textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_error)
             } finally {
                 updateAllButtonStates(readMetadataForCurrentSession())
-                buttonTranscribe.isEnabled = true // Example logic
             }
         }
     }
-    private fun handleTranscription() { /* ... calls updateMetadata ... */
+    private fun handleTranscription() {
         if (currentSessionFolderFile == null || !currentSessionFolderFile!!.exists()) { /* ... */ return }
         val audioFile = sessionManager.getAudioFilePath(currentSessionFolderFile!!)
-        // ... rest of audio file check ...
+        if (!audioFile.exists()) {
+            val dummyAudioFile = File(currentSessionFolderFile, "audio.mp4")
+            if (!dummyAudioFile.exists()) { Toast.makeText(context, getString(R.string.session_detail_audio_file_not_found), Toast.LENGTH_SHORT).show(); return }
+             Log.w(TAG, "Using DUMMY audio file: ${dummyAudioFile.absolutePath}")
+        }
 
-        buttonTranscribe.isEnabled = false; buttonTranscribe.text = "Transcribing..."
-        textViewTranscriptionStatus.text = "Status: Transcribing..."
+        buttonTranscribe.isEnabled = false; buttonTranscribe.text = getString(R.string.session_detail_transcribing_button)
+        textViewTranscriptionStatus.text = getString(R.string.session_detail_transcription_status_in_progress)
         scrollViewTranscript.visibility = View.GONE; textViewTranscript.text = ""
-        buttonRedact.isEnabled = false; textViewRedactionStatus.text = "Status: (transcription in progress)"
-        buttonDiarize.isEnabled = false; textViewDiarizationStatus.text = "Status: (transcription in progress)"
+        buttonRedact.isEnabled = false; textViewRedactionStatus.text = getString(R.string.session_detail_redaction_status_needs_transcript)
+        buttonDiarize.isEnabled = false; textViewDiarizationStatus.text = getString(R.string.session_detail_diarization_status_transcription_in_progress)
         buttonExport.isEnabled = false;
-
 
         viewLifecycleOwner.lifecycleScope.launch {
             var transcriptResult: String? = null
             try {
                 withContext(Dispatchers.IO) {
-                    whisperService.runTranscription(requireContext(), currentSessionFolderFile!!, audioFile) { transcript ->
-                        transcriptResult = transcript
-                    }
+                    whisperService.runTranscription(requireContext(), currentSessionFolderFile!!, audioFile) { transcript -> transcriptResult = transcript }
                 }
                 if (transcriptResult != null && transcriptResult!!.isNotBlank() && !transcriptResult!!.startsWith("Error:")) {
                     saveTranscriptToFile(transcriptResult!!)
@@ -402,16 +413,18 @@ class SessionDetailFragment : Fragment() {
                 } else {
                     updateMetadata(hasTranscript = false, hasRedacted = false, hasDiarization = readMetadataForCurrentSession()?.has_diarization ?: false)
                 }
-                 // UI update for transcript text and status is done within updateMetadata via loadAndDisplay
             } catch (e: Exception) {
+                Log.e(TAG, "Exception during transcription coroutine", e)
                 updateMetadata(hasTranscript = false, hasRedacted = false, hasDiarization = readMetadataForCurrentSession()?.has_diarization ?: false)
             } finally {
-                buttonTranscribe.isEnabled = true; buttonTranscribe.text = "Re-Transcribe"
-                loadAndDisplayExistingTranscript() // This will call updateAllButtonStates
+                // UI update for transcript text and status is done within updateMetadata -> loadAndDisplayExistingTranscript -> updateAllButtonStates
+                // Explicitly re-enable transcribe button here as it's the primary action that finished.
+                buttonTranscribe.isEnabled = true
+                // loadAndDisplayExistingTranscript will be called by updateMetadata, which then calls updateAllButtonStates
             }
         }
     }
-    private fun saveTranscriptToFile(transcript: String) { /* ... unchanged ... */
+    private fun saveTranscriptToFile(transcript: String) {
          currentSessionFolderFile?.let { folder ->
             val transcriptFile = File(folder, TRANSCRIPT_FILE_NAME)
             try { FileWriter(transcriptFile).use { it.write(transcript) }
@@ -419,44 +432,58 @@ class SessionDetailFragment : Fragment() {
             } catch (e: IOException) { Log.e(TAG, "Failed to save transcript to file", e) }
         }
     }
-    private fun updateMetadata(hasTranscript: Boolean? = null, hasRedacted: Boolean? = null, hasDiarization: Boolean? = null) { /* ... unchanged ... */
+    private fun updateMetadata(hasTranscript: Boolean? = null, hasRedacted: Boolean? = null, hasDiarization: Boolean? = null) {
         currentSessionFolderFile?.let { folder ->
             val metadata = readMetadataForCurrentSession() ?: Metadata()
 
             hasTranscript?.let { metadata.has_transcript = it }
-            // If a new transcript is set, previous redaction is no longer valid for this new transcript.
             if (hasTranscript == true) metadata.has_redacted = false
             hasRedacted?.let { metadata.has_redacted = it }
             hasDiarization?.let { metadata.has_diarization = it }
 
             val success = sessionManager.createMetadataFile(folder, metadata)
-            // After metadata is updated, reload the transcript display and button states
-            if(success) loadAndDisplayExistingTranscript() //This reloads transcript and calls updateAllButtonStates
-            else Log.e(TAG, "Failed to update metadata file, UI might be stale.")
+            if(success) {
+                Log.d(TAG, "Metadata file updated: $metadata")
+                // Reload transcript and update all button states, as metadata change can affect multiple things
+                loadAndDisplayExistingTranscript()
+            }
+            else {
+                Log.e(TAG, "Failed to update metadata file, UI might be stale.")
+                // Fallback to manually updating button states if metadata save failed but we want UI to reflect intent
+                updateAllButtonStates(metadata)
+            }
         }
     }
 
-    // MediaPlayer methods
-    private fun startPlayback() { /* ... unchanged ... */
+    private fun startPlayback() {
         if (currentSessionFolderFile == null || !currentSessionFolderFile!!.exists()) { return }
         val audioFile = sessionManager.getAudioFilePath(currentSessionFolderFile!!)
-        if (!audioFile.exists()) { return }
+        if (!audioFile.exists()) {
+            Toast.makeText(context, getString(R.string.session_detail_audio_file_not_found), Toast.LENGTH_SHORT).show()
+            return
+        }
         mediaPlayer = MediaPlayer().apply {
             try { setDataSource(audioFile.absolutePath); prepareAsync()
-                setOnPreparedListener { start(); isPlaying = true; buttonPlayAudio.text = "Stop Playback" }
+                setOnPreparedListener { start(); isPlaying = true; buttonPlayAudio.text = getString(R.string.session_detail_stop_playback) }
                 setOnCompletionListener { stopPlayback() }
-                setOnErrorListener { _, _, _ -> stopPlayback(); true }
-            } catch (e: IOException) { releaseMediaPlayer() }
+                setOnErrorListener { _, _, _ ->
+                    Toast.makeText(context, getString(R.string.session_detail_error_playing_audio), Toast.LENGTH_SHORT).show()
+                    stopPlayback(); true
+                }
+            } catch (e: IOException) {
+                Toast.makeText(context, getString(R.string.session_detail_playback_setup_error), Toast.LENGTH_SHORT).show()
+                releaseMediaPlayer()
+            }
         }
     }
-    private fun stopPlayback() { /* ... unchanged ... */
+    private fun stopPlayback() {
         mediaPlayer?.apply { if (this.isPlaying) { try { stop() } catch (e: IllegalStateException) {} }; release() }
         mediaPlayer = null; isPlaying = false
-        if (::buttonPlayAudio.isInitialized) { buttonPlayAudio.text = "Play Audio" }
+        if (::buttonPlayAudio.isInitialized) { buttonPlayAudio.text = getString(R.string.session_detail_play_audio) }
     }
-    private fun releaseMediaPlayer() { /* ... unchanged ... */
+    private fun releaseMediaPlayer() {
         mediaPlayer?.release(); mediaPlayer = null; isPlaying = false
-        if (view != null && ::buttonPlayAudio.isInitialized) { buttonPlayAudio.text = "Play Audio"}
+        if (view != null && ::buttonPlayAudio.isInitialized) { buttonPlayAudio.text = getString(R.string.session_detail_play_audio)}
     }
     override fun onStop() { super.onStop(); if (isPlaying) { stopPlayback() } else { releaseMediaPlayer() } }
 

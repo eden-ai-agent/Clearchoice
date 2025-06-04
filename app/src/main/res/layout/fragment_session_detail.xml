@@ -115,4 +115,15 @@
             android:text="Export (Placeholder)" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/textViewDisclaimer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/session_detail_disclaimer"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:gravity="center_horizontal"
+        android:padding="8dp"/>
+
 </LinearLayout>
