@@ -31,3 +31,16 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# ClearChoice-specific additions
+whisper_models/
+*.bin
+*.pt
+*.onnx
+
+exports/
+sessions/
+*.jsonl
+*.wav
+*.mp3
+*.flac
