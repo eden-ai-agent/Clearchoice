@@ -1,12 +1,14 @@
 # Gradle files
 .gradle/
 build/
+/build
 
 # Local configuration file (sdk path, etc)
 local.properties
 
 # Log/OS Files
 *.log
+.DS_Store
 
 # Android Studio generated files and folders
 captures/
@@ -14,6 +16,7 @@ captures/
 .cxx/
 *.apk
 output-metadata.json
+*.ap_
 
 # IntelliJ
 *.iml
@@ -21,6 +24,9 @@ output-metadata.json
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
+libraries/
+gradle.xml
+navEditor.xml
 
 # Keystore files
 *.jks
@@ -31,8 +37,20 @@ google-services.json
 
 # Android Profiling
 *.hprof
+*.snapshot
 
-# ClearChoice-specific additions
+# Lint
+lint-baseline.xml
+
+# Emulator
+*.avd
+*.ini
+
+# Buck
+buck-out/
+.buckd/
+
+# ClearChoice-specific additions (ensure these are not duplicated if already present)
 whisper_models/
 *.bin
 *.pt

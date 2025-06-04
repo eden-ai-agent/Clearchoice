@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Transcript Source:"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/radioGroupSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radioOriginal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Original Transcript"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/radioRedacted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Redacted Transcript" />
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Export Format:"
+        android:textSize="16sp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/radioGroupFormat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radioFormatTxt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=".txt"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/radioFormatJson"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text=".json"/>
+
+        <RadioButton
+            android:id="@+id/radioFormatPdf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text=".pdf"/>
+    </RadioGroup>
+
+</LinearLayout>
