@@ -6,6 +6,7 @@
     android:padding="24dp">
 
     <TextView
+        android:id="@+id/textViewDialogExportSourceLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Select Transcript Source:"
@@ -33,6 +34,7 @@
     </RadioGroup>
 
     <TextView
+        android:id="@+id/textViewDialogExportFormatLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Select Export Format:"

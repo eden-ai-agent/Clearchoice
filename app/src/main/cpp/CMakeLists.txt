@@ -20,7 +20,31 @@ add_library( # Sets the name of the library.
         jni_bridge.cpp
         jni_diarization_bridge.cpp
         whisper_cpp/whisper.cpp
+        whisper_cpp/ggml.c # Add ggml.c to sources
+        # Add diarization module sources
+        diarization_module/vad_engine.cpp
+        diarization_module/embedding_extractor.cpp
+        diarization_module/speaker_clusterer.cpp
         )
+
+# Include directories
+target_include_directories(native-lib PRIVATE
+    ${CMAKE_SOURCE_DIR}/whisper_cpp
+    ${CMAKE_SOURCE_DIR}/diarization_module
+)
+
+# Add compile definitions
+target_compile_definitions(native-lib PRIVATE WHISPER_BUILD=1 GGML_USE_K_QUANTS=1) # K_QUANTS might need specific ggml version/setup
+
+# Optional: NEON flags for ARM (Uncomment if building for ARM and testing performance)
+# if(ANDROID_ABI MATCHES "armeabi-v7a")
+#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon -mfloat-abi=softfp")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon -mfloat-abi=softfp")
+# elseif(ANDROID_ABI MATCHES "arm64-v8a")
+#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flax-vector-conversions") # For ARM64, Neon is often default or implied by architecture.
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flax-vector-conversions")
+# endif()
+
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries from the Android NDK,
@@ -31,4 +55,5 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         android
-        log )
+        log
+        )

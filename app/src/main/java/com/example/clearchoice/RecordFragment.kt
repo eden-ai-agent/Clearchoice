@@ -43,8 +43,8 @@ class RecordFragment : Fragment() {
             if (isActuallyRecording) {
                 // Simulate stopping recording
                 isActuallyRecording = false
-                buttonRecord.text = "Start Recording"
-                textViewStatus.text = "Status: Idle (Simulated Stop)"
+                buttonRecord.text = getString(R.string.record_button_start)
+                textViewStatus.text = getString(R.string.record_status_stopped)
                 Log.d(TAG, "Simulated recording stopped.")
 
                 // Create a dummy session name for navigation
@@ -60,20 +60,20 @@ class RecordFragment : Fragment() {
                 // Simulate starting recording
                 if (checkRecordAudioPermission()) {
                     isActuallyRecording = true
-                    buttonRecord.text = "Stop Recording"
-                    textViewStatus.text = "Status: Recording... (Simulated)"
+                    buttonRecord.text = getString(R.string.record_button_stop)
+                    textViewStatus.text = getString(R.string.record_status_recording)
                     Log.d(TAG, "Simulated recording started.")
                     // Actual recording logic will be added later
                 } else {
                     requestRecordAudioPermission()
-                    Toast.makeText(context, "Audio permission needed to record.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, getString(R.string.record_permission_needed), Toast.LENGTH_LONG).show()
                 }
             }
         }
 
         // Initial state
-        buttonRecord.text = "Start Recording"
-        textViewStatus.text = "Status: Idle"
+        buttonRecord.text = getString(R.string.record_button_start)
+        textViewStatus.text = getString(R.string.record_status_idle)
 
         // Placeholder for permission check (remains useful)
         if (!checkRecordAudioPermission()) {
