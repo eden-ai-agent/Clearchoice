@@ -6,6 +6,12 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+/* Forward declarations used by function prototypes below.  Declaring them
+ * early avoids potential visibility warnings with some compilers when the
+ * full definitions appear later in the file. */
+struct ggml_context;
+struct ggml_init_params;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
