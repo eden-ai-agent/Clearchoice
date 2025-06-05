@@ -6,29 +6,42 @@ cmake_minimum_required(VERSION 3.22.1)
 # Declares and names the project.
 project("clearchoice")
 
+# Output compiled libraries to jniLibs so that Gradle can package them
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
+
 # Creates and names a library, sets it as SHARED, and provides its source
 # files. You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-add_library( # Sets the name of the library.
-        native-lib
-
-        # Sets the library as a shared library.
+# First build whisper.cpp and ggml.c into a separate shared library
+add_library(
+        whisper
         SHARED
+        whisper_cpp/whisper.cpp
+        whisper_cpp/ggml.c
+)
 
-        # Provides a relative path to your source file(s).
+# JNI glue and other native code are compiled into native-lib and linked
+# against the whisper library above
+add_library(
+        native-lib
+        SHARED
+        native-lib.cpp
         jni_bridge.cpp
         jni_diarization_bridge.cpp
-        whisper_cpp/whisper.cpp
-        whisper_cpp/ggml.c # Add ggml.c to sources
         # Add diarization module sources
         diarization_module/vad_engine.cpp
         diarization_module/embedding_extractor.cpp
         diarization_module/speaker_clusterer.cpp
-        )
+)
 
 # Prevent accidental inclusion of standalone entry points.
 set_source_files_properties(main.cpp PROPERTIES HEADER_FILE_ONLY TRUE)
+
+# Include directories for both libraries
+target_include_directories(whisper PUBLIC
+    ${CMAKE_SOURCE_DIR}/whisper_cpp
+)
 
 # Include directories
 target_include_directories(native-lib PRIVATE
@@ -37,7 +50,8 @@ target_include_directories(native-lib PRIVATE
 )
 
 # Add compile definitions
-target_compile_definitions(native-lib PRIVATE WHISPER_BUILD=1 GGML_USE_K_QUANTS=1) # K_QUANTS might need specific ggml version/setup
+target_compile_definitions(whisper PRIVATE WHISPER_BUILD=1 GGML_USE_K_QUANTS=1)
+target_compile_definitions(native-lib PRIVATE)
 
 # Optional: NEON flags for ARM (Uncomment if building for ARM and testing performance)
 # if(ANDROID_ABI MATCHES "armeabi-v7a")
@@ -52,11 +66,9 @@ target_compile_definitions(native-lib PRIVATE WHISPER_BUILD=1 GGML_USE_K_QUANTS=
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries from the Android NDK,
 # or prebuilt libraries with TARGET_LINK_LIBRARIES.
-target_link_libraries( # Specifies the target library.
+target_link_libraries(
         native-lib
-
-        # Links the target library to the log library
-        # included in the NDK.
+        whisper
         android
         log
-        )
+)
