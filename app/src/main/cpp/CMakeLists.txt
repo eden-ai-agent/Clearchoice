@@ -27,6 +27,9 @@ add_library( # Sets the name of the library.
         diarization_module/speaker_clusterer.cpp
         )
 
+# Prevent accidental inclusion of standalone entry points.
+set_source_files_properties(main.cpp PROPERTIES HEADER_FILE_ONLY TRUE)
+
 # Include directories
 target_include_directories(native-lib PRIVATE
     ${CMAKE_SOURCE_DIR}/whisper_cpp
