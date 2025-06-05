@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_record"
+        android:icon="@drawable/ic_mic_24"
+        android:title="@string/bottom_nav_record" />
+    <item
+        android:id="@+id/navigation_sessions"
+        android:icon="@drawable/ic_view_list_24"
+        android:title="@string/bottom_nav_sessions" />
+</menu>
