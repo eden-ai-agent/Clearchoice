@@ -4,13 +4,24 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // Minimal context structure - real ggml is much more complex
-struct ggml_context;
+struct ggml_context {
+    void * mem_buffer;  // pointer to allocated memory buffer
+    size_t mem_size;    // size of the buffer in bytes
+};
+
+// Parameters for ggml_init mirroring the real library
+struct ggml_init_params {
+    size_t  mem_size;   // size of the memory buffer to use
+    void  * mem_buffer; // buffer to use for memory allocation
+    bool    no_alloc;   // if true, do not allocate memory if mem_buffer is NULL
+};
 
 // Placeholder for tensor structure
 struct ggml_tensor {

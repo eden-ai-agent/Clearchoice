@@ -5,13 +5,16 @@
 
 // Example implementation of a placeholder function
 struct ggml_context * ggml_init(struct ggml_init_params params) {
-    // In a real ggml library, params would be used.
-    // Here, we just allocate a dummy context.
-    // Note: struct ggml_init_params is not defined in placeholder ggml.h,
-    // so this function signature is illustrative.
+    // In a real ggml library, params would be used to manage memory.
     printf("GGML.C: ggml_init called (placeholder)\n");
     struct ggml_context* ctx = (struct ggml_context*)malloc(sizeof(struct ggml_context));
-    // Initialize context members if any (none in placeholder ggml_context)
+    if (!ctx) {
+        return NULL;
+    }
+    // initialize context fields using provided parameters
+    ctx->mem_buffer = params.mem_buffer;
+    ctx->mem_size   = params.mem_size;
+    // ignore params.no_alloc in this simplified placeholder
     return ctx;
 }
 
