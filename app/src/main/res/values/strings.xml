@@ -1,0 +1,101 @@
+<resources>
+    <string name="app_name">ClearChoice</string>
+
+    <!-- Bottom Navigation -->
+    <string name="bottom_nav_record">Record</string>
+    <string name="bottom_nav_sessions">Sessions</string>
+
+    <!-- Record Fragment -->
+    <string name="record_button_start">Start Recording</string>
+    <string name="record_button_stop">Stop Recording</string>
+    <string name="record_status_idle">Status: Idle</string>
+    <string name="record_status_recording">Status: Recording... (Simulated)</string>
+    <string name="record_status_stopped">Status: Idle (Simulated Stop)</string>
+    <string name="record_permission_needed">Audio permission needed to record.</string>
+
+    <!-- Session Detail Fragment -->
+    <string name="session_detail_title_prefix">Session: </string>
+    <string name="session_detail_error_no_name">Session: Error - No name provided</string>
+    <string name="session_detail_error_not_found">Error: Session folder not found.</string>
+    <string name="session_detail_error_storage_not_available">Error: Storage not available.</string>
+    <string name="session_detail_play_audio">Play Audio</string>
+    <string name="session_detail_stop_playback">Stop Playback</string>
+    <string name="session_detail_audio_file_not_found">Audio file not found.</string>
+    <string name="session_detail_error_playing_audio">Error playing audio.</string>
+    <string name="session_detail_playback_setup_error">Error setting up audio playback.</string>
+
+    <string name="session_detail_transcribe_button">Transcribe</string>
+    <string name="session_detail_retranscribe_button">Re-Transcribe</string>
+    <string name="session_detail_transcribing_button">Transcribing...</string>
+    <string name="session_detail_transcription_status_ready">Status: Ready</string>
+    <string name="session_detail_transcription_status_no_transcript">Status: No transcript yet.</string>
+    <string name="session_detail_transcription_status_in_progress">Status: Transcribing...</string>
+    <string name="session_detail_transcription_status_complete">Status: Transcription Complete.</string>
+    <string name="session_detail_transcription_status_failed">Status: Transcription Failed.</string>
+    <string name="session_detail_transcription_status_error_reading">Status: Error reading transcript.</string>
+    <string name="session_detail_transcription_status_empty_file">Status: Ready (empty transcript file).</string>
+    <string name="session_detail_transcript_loaded">Status: Transcript loaded.</string>
+
+
+    <string name="session_detail_redact_button">Redact Transcript</string>
+    <string name="session_detail_redacted_button">Redacted</string>
+    <string name="session_detail_redacting_button">Redacting...</string>
+    <string name="session_detail_redaction_status_ready">Status: Ready to Redact</string>
+    <string name="session_detail_redaction_status_done">Status: Redaction already done.</string>
+    <string name="session_detail_redaction_status_needs_transcript">Status: (needs transcript first)</string>
+    <string name="session_detail_redaction_status_missing_metadata">Status: (metadata missing)</string>
+    <string name="session_detail_redaction_status_in_progress">Status: Redacting...</string>
+    <string name="session_detail_redaction_status_complete">Status: Redaction Complete.</string>
+    <string name="session_detail_redaction_status_error">Status: Redaction Error.</string>
+    <string name="session_detail_redaction_transcript_missing">Original transcript not found or is empty.</string>
+    <string name="session_detail_redaction_transcript_blank">Original transcript is blank.</string>
+
+
+    <string name="session_detail_diarize_button">Diarize Speakers</string>
+    <string name="session_detail_diarized_button">Diarized</string>
+    <string name="session_detail_diarizing_button">Diarizing...</string>
+    <string name="session_detail_diarization_status_ready">Status: Ready to Diarize</string>
+    <string name="session_detail_diarization_status_done">Status: Diarization already done.</string>
+    <string name="session_detail_diarization_status_audio_needed">Status: (audio file needed)</string>
+    <string name="session_detail_diarization_status_in_progress">Status: Diarizing...</string>
+    <string name="session_detail_diarization_status_complete">Status: Diarization Complete.</string>
+    <string name="session_detail_diarization_status_failed">Status: Diarization Failed or empty.</string>
+    <string name="session_detail_diarization_status_error_saving">Status: Error saving results.</string>
+    <string name="session_detail_diarization_status_error_exception">Status: Diarization Error (Exception).</string>
+    <string name="session_detail_diarization_audio_missing">Audio file not found for diarization.</string>
+    <string name="session_detail_diarization_status_transcription_in_progress">Status: (transcription in progress)</string>
+
+
+    <string name="session_detail_export_button">Export Session</string>
+    <string name="session_detail_export_options_title">Export Options</string>
+    <string name="session_detail_export_source_label">Select Transcript Source:</string>
+    <string name="session_detail_export_source_original">Original Transcript</string>
+    <string name="session_detail_export_source_redacted">Redacted Transcript</string>
+    <string name="session_detail_export_format_label">Select Export Format:</string>
+    <string name="session_detail_export_format_txt">.txt</string>
+    <string name="session_detail_export_format_json">.json</string>
+    <string name="session_detail_export_format_pdf">.pdf</string>
+    <string name="session_detail_export_action">Export</string>
+    <string name="session_detail_export_cancel">Cancel</string>
+    <string name="session_detail_export_error_source_not_found">Selected transcript file not found.</string>
+    <string name="session_detail_export_error_source_blank">Selected transcript content is blank.</string>
+    <string name="session_detail_export_error_prepare_failed">Failed to prepare export file.</string>
+    <string name="session_detail_export_share_title">Export Session File</string>
+    <string name="session_detail_export_error_share_app_not_found">Error: Could not launch share action. No app can handle this type of file?</string>
+    <string name="session_detail_disclaimer">Redaction is automatic and may not remove all personal information. Please review content manually before sharing.</string>
+
+    <!-- Biometric Authentication (MainActivity) -->
+    <string name="biometric_auth_title">Biometric Lock</string>
+    <string name="biometric_auth_subtitle">Log in using your biometric credential</string>
+    <string name="biometric_auth_description">ClearChoice app is locked. Authenticate to continue.</string>
+    <string name="biometric_auth_succeeded">Authentication succeeded!</string>
+    <string name="biometric_auth_error_generic">Authentication error: %s</string> <!-- %s will be replaced by errString -->
+    <string name="biometric_auth_failed">Authentication failed. Try again.</string>
+    <string name="biometric_auth_no_hardware">Biometric hardware not available.</string>
+    <string name="biometric_auth_hw_unavailable">Biometric features currently unavailable.</string>
+    <string name="biometric_auth_none_enrolled">No biometrics enrolled. Accessing app directly (dev mode).</string>
+    <string name="biometric_auth_security_update_required">Biometric security update required.</string>
+    <string name="biometric_auth_unsupported">Biometric option not supported.</string>
+    <string name="biometric_auth_status_unknown">Biometric status unknown.</string>
+
+</resources>
