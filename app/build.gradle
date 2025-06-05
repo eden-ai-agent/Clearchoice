@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Define repositories here as well so building the module directly still works
+repositories {
+    google()
+    mavenCentral()
+}
+
 android {
     namespace 'com.example.clearchoice'
     compileSdk 34
